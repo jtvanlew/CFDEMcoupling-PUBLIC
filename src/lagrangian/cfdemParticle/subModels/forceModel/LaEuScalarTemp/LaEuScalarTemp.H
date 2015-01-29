@@ -93,6 +93,8 @@ private:
 
     scalar Cp_;                                  // specific heat capacity [W*s/(kg*K)]
 
+    scalar ks_;                                  // conductivity of solid [W/m-K] (added by jvl)
+
     word densityFieldName_;
 
     const volScalarField& rho_;                  // ref to fluid density field

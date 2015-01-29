@@ -64,6 +64,7 @@ LaEuScalarTemp::LaEuScalarTemp
     forceModel(dict,sm),
     propsDict_(dict.subDict(typeName + "Props")),
     verbose_(false),
+    ks_(readScalar(propsDict_.lookup("ks"))),        // added by jvl
     tempFieldName_(propsDict_.lookup("tempFieldName")),
     tempField_(sm.mesh().lookupObject<volScalarField> (tempFieldName_)),
     voidfractionFieldName_(propsDict_.lookup("voidfractionFieldName")),
@@ -152,6 +153,7 @@ void LaEuScalarTemp::manipulateScalarField(volScalarField& EuField) const
     scalar Rep(0);
     scalar Pr(0);
     scalar Nup(0);
+    scalar Bi(0);
     scalar n = 3.5; // model parameter
 
     interpolationCellPoint<scalar> voidfractionInterpolator_(voidfraction_);
@@ -200,7 +202,18 @@ void LaEuScalarTemp::manipulateScalarField(volScalarField& EuField) const
                 {
                     Nup = 2+0.000045*pow(voidfraction,n)*pow(Rep,1.8);
                 }
-                scalar h = lambda_*Nup/(ds);
+                scalar hp = lambda_*Nup/(ds);
+                scalar h(0);
+                Bi = hp*ds/ks_;
+
+                if (Bi > 0.1)
+                {
+                    h = hp/(1.+Bi/5.);
+                }
+                else
+                {
+                    h = hp;
+                }
 
                 // calc convective heat flux [W]
                 scalar partHeatFlux = h * As * (Tfluid - partTemp_[index][0]);
@@ -214,6 +227,9 @@ void LaEuScalarTemp::manipulateScalarField(volScalarField& EuField) const
                     Info << "As = " << As << endl;
                     Info << "nuf = " << nuf << endl;
                     Info << "Rep = " << Rep << endl;
+                    Info << "Bi = " << Bi << endl;
+                    Info << "Original h = " << hp << endl;
+                    Info << "Corrected h = " << h << endl;
                     Info << "Pr = " << Pr << endl;
                     Info << "Nup = " << Nup << endl;
                     Info << "voidfraction = " << voidfraction << endl;
